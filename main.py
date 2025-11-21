@@ -44,7 +44,7 @@ def gemini_api():
         prompt = data['prompt']
         
         # 呼叫 Gemini API (限制輸出長度在 50 tokens 內)
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(

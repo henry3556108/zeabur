@@ -43,14 +43,44 @@ def gemini_api():
         
         prompt = data['prompt']
         
+        # 設定安全過濾器（降低敏感度）
+        safety_settings = [
+            {
+                "category": "HARM_CATEGORY_HARASSMENT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_HATE_SPEECH",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            },
+            {
+                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                "threshold": "BLOCK_ONLY_HIGH"
+            }
+        ]
+        
         # 呼叫 Gemini API (限制輸出長度在 50 tokens 內)
         model = genai.GenerativeModel('gemini-2.5-flash')
         response = model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
                 max_output_tokens=50,
-            )
+            ),
+            safety_settings=safety_settings
         )
+        
+        # 檢查回應是否被安全過濾器阻擋
+        if not response.candidates or not response.candidates[0].content.parts:
+            finish_reason = response.candidates[0].finish_reason if response.candidates else "UNKNOWN"
+            return jsonify({
+                'success': False,
+                'error': f'Response blocked by safety filter. Finish reason: {finish_reason}',
+                'prompt': prompt
+            }), 400
         
         return jsonify({
             'success': True,

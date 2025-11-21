@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify
 import os
-import google.generativeai as genai
 from dotenv import load_dotenv
-
-# 載入環境變數
-load_dotenv()
+import google.generativeai as genai
+from google.generativeai import types
 
 app = Flask(__name__)
 
@@ -43,37 +41,37 @@ def gemini_api():
         
         prompt = data['prompt']
         
-        # 設定安全過濾器（降低敏感度）
-        safety_settings = [
-            {
-                "category": "HARM_CATEGORY_HARASSMENT",
-                "threshold": "BLOCK_ONLY_HIGH"
-            },
-            {
-                "category": "HARM_CATEGORY_HATE_SPEECH",
-                "threshold": "BLOCK_ONLY_HIGH"
-            },
-            {
-                "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                "threshold": "BLOCK_ONLY_HIGH"
-            },
-            {
-                "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-                "threshold": "BLOCK_ONLY_HIGH"
-            }
-        ]
+        # 已在 client.generate_content 呼叫中設定安全過濾，這裡的舊 safety_settings 已移除
+
         
-        # 呼叫 Gemini API (限制輸出長度在 50 tokens 內)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        # 使用 genai.GenerativeModel 呼叫 Gemini API（限制輸出長度在 50 tokens 內）
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(
             prompt,
-            generation_config=genai.types.GenerationConfig(
+            generation_config=types.GenerationConfig(
                 max_output_tokens=50,
             ),
-            safety_settings=safety_settings
+            safety_settings=[
+                {
+                    "category": types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    "threshold": types.HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    "category": types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    "threshold": types.HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    "category": types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    "threshold": types.HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    "category": types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    "threshold": types.HarmBlockThreshold.BLOCK_NONE,
+                },
+            ],
         )
         
-        # 檢查回應是否被安全過濾器阻擋
+        # 若被安全過濾器阻擋
         if not response.candidates or not response.candidates[0].content.parts:
             finish_reason = response.candidates[0].finish_reason if response.candidates else "UNKNOWN"
             return jsonify({

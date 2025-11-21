@@ -38,7 +38,7 @@ git commit -m "Initial commit"
 git branch -M main
 
 # 加入遠端 repository (請替換成您的 GitHub Repository URL)
-git remote add origin https://github.com/您的使用者名稱/zeabur-demo.git
+git remote add origin https://github.com/henry3556108/zeabur.git
 
 # 推送到 GitHub
 git push -u origin main
